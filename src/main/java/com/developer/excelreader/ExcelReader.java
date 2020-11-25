@@ -4,6 +4,10 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 
 import com.model.ModelTable;
 
@@ -11,12 +15,19 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+
 public class ExcelReader {
     public static void main(String[] args) throws IOException {
 
 
+//    	   hibernate sessionHibernate building
+    	Configuration configuration = new Configuration();
+    	configuration.configure("hibernate.cfg.xml");
+    	SessionFactory buildSessionFactory = configuration.buildSessionFactory();
+    
+    	
 //        file loading
-        String str = "example.xlsx";
+        String str = "Book2.xlsx";
         FileInputStream fileInputStream = new FileInputStream(str);
         XSSFWorkbook workbook = new XSSFWorkbook(fileInputStream);
         XSSFSheet sheet = workbook.getSheetAt(0);
@@ -29,7 +40,7 @@ public class ExcelReader {
 
 
 //        creating list to store the rowObject and modelObject
-        ArrayList<ArrayList<Object>> valueList = new ArrayList<ArrayList<Object>>();
+        ArrayList<ArrayList<String>> valueList = new ArrayList<ArrayList<String>>();
         ArrayList<ModelTable> modelList = new ArrayList<ModelTable>();
 
 
@@ -42,63 +53,68 @@ public class ExcelReader {
             XSSFRow row = sheet.getRow(i);
 
 //            creating a row list
-            ArrayList<Object> rowList = new ArrayList<Object>();
+            ArrayList<String> rowList = new ArrayList<String>();
             for (int j = 0; j < lastCell; j++) {
                 XSSFCell cell = row.getCell(j);
-                Object obj = cell!=null?cell.toString():null;
+                String obj = cell!=null?cell.toString():"null";
 
 //                adding a each row objects in the rowList
                 rowList.add(obj);
             }
 
+            
+            
+// //           making a modelObject and adding it into the list
+            ModelTable modelTable = new ModelTable();
+            int k=0;
+            modelTable.setSno(rowList.get(k)); k++;
+            modelTable.setTransactionID(rowList.get(k)); k++;
+            modelTable.setTransactionDate(rowList.get(k)); k++;
+            modelTable.setMethod(rowList.get(k)); k++;
+            modelTable.setPaymentData(rowList.get(k)); k++;
+            modelTable.setPaymentStatus(rowList.get(k)); k++;
+            modelTable.setSsoId(rowList.get(k)); k++;
+            modelTable.setFirstName(rowList.get(k)); k++;
+            modelTable.setLastNameAddress(rowList.get(k)); k++;
+            modelTable.setAddress(rowList.get(k)); k++;
+            modelTable.setState(rowList.get(k)); k++;
+            modelTable.setCity(rowList.get(k)); k++;
+            modelTable.setCountry(rowList.get(k)); k++;
+            modelTable.setZip(rowList.get(k)); k++;
+            modelTable.setMobile(rowList.get(k)); k++;
+            modelTable.setEmail(rowList.get(k)); k++;
+            modelTable.setCurrency(rowList.get(k)); k++;
+            modelTable.setAmount(rowList.get(k)); k++;
+            modelTable.setPackageType(rowList.get(k));
+            modelList.add(modelTable);
 
-
-//            making a modelObject and adding it into the list
-//            ModelTable modelTable = new ModelTable();
-//            int k=0;
-//            modelTable.setSno(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setTransactionID(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setTransactionDate(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setMethod(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setPaymentData(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setPaymentStatus(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setSsoId(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setFirstName(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setLastNameAddress(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setAddress(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setCity(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setState(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setZip(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setCountry(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setMobile(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setEmail(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setCurrency(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setAmount(rowList.get(k)!=null? rowList.get(k):null); k++;
-//            modelTable.setPackageType(rowList.get(k)!=null? rowList.get(k):null);
-//            modelList.add(modelTable);
-
-
-
-
+            
+            
 //            adding a rowList into the list
             valueList.add(rowList);
-            System.out.println();
+//            System.out.println();
         }
 
-//        rowList streaming
-        valueList.stream().forEach(l->{
-            System.out.println(l);
-        });
-
-
-//        modelObject streaming
-//        modelList.stream().forEach(l->{
+//  //      rowList streaming
+//        valueList.stream().forEach(l->{
 //            System.out.println(l);
 //        });
+
+
+// //       modelObject streaming
+        Session currentSession = buildSessionFactory.openSession();
+        modelList.stream().forEach(l->{
+//          need to use the session to sql query
+        Transaction beginTransaction = currentSession.beginTransaction();
+        currentSession.save(l);
+        beginTransaction.commit();
+        });
+        currentSession.close();
 
 
 //        closing the workbook and filestream
         workbook.close();
         fileInputStream.close();
+        
     }
 }
